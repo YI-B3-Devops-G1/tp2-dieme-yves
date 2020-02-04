@@ -1,0 +1,48 @@
+version: 3
+
+services:
+
+reverseproxy:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    container_name: reverseproxy
+    hostname: reverseproxy
+    restart: on-failure
+    ports:
+      - 3000:3000 
+
+  postgres:
+    image: postgres:10
+    environment:
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_passw
+      POSTGRES_DB: docker_database
+
+  redis:
+    image: "redis:alpine"
+     container_name: redis
+     networks:
+      - network-db
+
+  api:
+    build: Dockerfile-API
+    container_name: nodeapi
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: 'postgres://rails_user:rails_password@postgres:5432/rails_db'
+      REDIS_HOST: 'redis:6379'
+      - DB_NAME: mainBDD
+      - DB_USER: admin
+      - DB_PASSWORD: admin
+
+  nginx:
+    build: .
+    image: nginx:1.17.8-alpine
+    ports:
+      - 3000:3000
+
